@@ -252,6 +252,7 @@ void getFourVertexes(Mat & OriginalFrame, vector<Point2f> & vertexes,Point & cen
 				vertexes.push_back(Vertex_tmp[(3 + index) % 4]);
 
 				arrowedLine(OriginalFrame, vertexes[0], vertexes[1], Scalar(0, 0, 255),6);
+				return;
 
 
 			}
