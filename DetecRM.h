@@ -11,7 +11,7 @@
 ////Frame width & Height
 //w = 640
 //h = 480
-#include<opencv.hpp>
+//include<opencv.hpp>
 using namespace cv;
 #define REF_IMAGE_NUM 3
 char ReferenceImagesPaths[REF_IMAGE_NUM][20] = { "D:/ArrowUp.jpg", "D:/RM.jpg", "D:/Circle.jpg" };
@@ -34,17 +34,10 @@ double min(double a, double b)
 	return a < b ? a : b;
 }
 
+extern Mat patt;
 
-//class Symbol
-//{
-//public:
-//	char *name;
-//	Mat image;
-//};
-//Symbol referenceImages[REF_IMAGE_NUM];
-//
-//
-//
+
+
 //void readRefImages()
 //{
 //	for (int i = 0; i < REF_IMAGE_NUM; i++)
@@ -57,6 +50,32 @@ double min(double a, double b)
 //	}
 //
 //}
+
+void resize_and_threshold_warped(Mat & warppedimage)
+{
+//Resize the corrected image to proper size & convert it to grayscale
+//warped_new = cv2.resize(image, (w / 2, h / 2))
+//warped_new_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+//Smoothing Out Image
+//blur = cv2.GaussianBlur(warppedimage, (5, 5), 0)
+ 
+	GaussianBlur(warppedimage, warppedimage, Size(3, 3), 0);
+//Calculate the maximum pixel and minimum pixel value & compute threshold
+	double min_val, max_val,min_loc,max_loc;
+	minMaxLoc(warppedimage, &min_val, &max_val);
+
+ 
+	double thresh = (min_val + max_val) / 2;
+
+//Threshold the image
+	cv::threshold(warppedimage, warppedimage, thresh, 255, CV_THRESH_BINARY);
+
+
+
+}
+
+
 bool isAnticlock(vector<Point2f> &vertexes)
 {
 	Point v1 = vertexes[1] - vertexes[0];
@@ -125,8 +144,6 @@ void getFourVertexes(Mat & OriginalFrame, vector<Point2f> & vertexes,Point & cen
 	//Detecting Edges
 
 	Mat edges = auto_canny(blurred);
-	//split(OriginalFrame)
-	//Contour Detection & checking for squares based on the square area
 
 	std::vector<std::vector<cv::Point>> contours;
 	vector<vector<Point> >poly;
@@ -141,17 +158,16 @@ void getFourVertexes(Mat & OriginalFrame, vector<Point2f> & vertexes,Point & cen
 
 	cv::findContours(edges, contours, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 	poly.resize(contours.size());
- 
+
+	vector<Point2f> Vertex_tmp;
 
 	for (int i = 0; i < contours.size(); i++)
 	{
 		approxPolyDP(Mat(contours[i]), poly[i], 3, true);// 0.01*arcLength(Mat(contours[i]), true), true);
-		//	vector<vector<Point> >poly(contours.size());
 		if (poly[i].size() ==12)
 		{
 			double area = contourArea(poly[i]);
-			//std::cout << "GOT YA" << std::endl;
-			 
+
 			if (area > minSquareArea)
 			{
 				//std::cout << "HAHA" << std::endl;
@@ -160,78 +176,83 @@ void getFourVertexes(Mat & OriginalFrame, vector<Point2f> & vertexes,Point & cen
 				double line21 = norm(poly[i][2] - poly[i][1]);
 				double line32 = norm(poly[i][3] - poly[i][2]);
 				Point center_ = poly[i][0] + poly[i][3] + poly[i][6] + poly[i][9];
-				//center.x = (int)(center.x*0.25);
-				//center.y = (int)(center.y*0.25);
 				center_ = center_ *0.25;
-			//	cout << center << endl;		
-				//cout << fx*(center.x - u0) / 1000<<" "<<fy*(center.y-v0)/1000<<endl;
 				unsigned char *p = splits[0].ptr<unsigned char>(center_.y);
 				if (abs(p[center_.x] - 98) < 50) continue;
 				center = center_;
+				Point2f Vertex[4];
 
-				//cout << (int)(p[center.x]) << endl;
-
-			//	if(OriginalFrame.at<Vec3b>(center)[0]>50)//if (p[center.x]>10)
-			//	{
-			////		 cout << (int)(OriginalFrame.at<Vec3b>(center)[0]) << endl; // cout << (int)p[center.x] << endl;
-			//		continue;
-			//	}
-				//cout << (int)(OriginalFrame.at<Vec3b>(center)[0]) << endl; // cout << (int)p[center.x] << endl;
-				vector<Point> Vertex;
+				//根据长短边确定选择四个内角点
 				if (3* line21 < line32)// && line32 < line32 * 12)
-				{
-									
-										
+				{				
 					
-					vertexes.push_back(poly[i][1]);
-					vertexes.push_back(poly[i][4]);
-					vertexes.push_back(poly[i][7]);
-	             vertexes.push_back(poly[i][10]);
-				// cout << "Begin 1:";
-
-
+					Vertex_tmp.push_back(poly[i][1]);
+					Vertex_tmp.push_back(poly[i][4]);
+					Vertex_tmp.push_back(poly[i][7]);
+					Vertex_tmp.push_back(poly[i][10]);
 				
 				}
 				else if (line32 *3 <line21)// && line32<12 *line21)
 				{
 										
 										
-					vertexes.push_back(poly[i][0]);
-					vertexes.push_back(poly[i][3]);
-					vertexes.push_back(poly[i][6]);
-					vertexes.push_back(poly[i][9]);
-				//cout << "Begin 0:";
+					Vertex_tmp.push_back(poly[i][0]);
+					Vertex_tmp.push_back(poly[i][3]);
+					Vertex_tmp.push_back(poly[i][6]);
+					Vertex_tmp.push_back(poly[i][9]);
 
 				}
 				else
 				{		
-					
-					vertexes.push_back(poly[i][2]);
-					vertexes.push_back(poly[i][5]);
-					vertexes.push_back(poly[i][8]);
-					vertexes.push_back(poly[i][11]);
-	
-					//cout << "Begein 2:";
+					Vertex_tmp.push_back(poly[i][2]);
+					Vertex_tmp.push_back(poly[i][5]);
+					Vertex_tmp.push_back(poly[i][8]);
+					Vertex_tmp.push_back(poly[i][11]);
 				}
-				if (isAnticlock(vertexes))
+				if (isAnticlock(Vertex_tmp))//确保是逆时针顺序排列角点
 				{
-					Point2f temp = vertexes[1];
-					vertexes[1] = vertexes[3];
-					vertexes[3] = temp;
+					Point2f temp = Vertex_tmp[1];
+					Vertex_tmp[1] = Vertex_tmp[3];
+					Vertex_tmp[3] = temp;
 
 				}
 
-				//line(OriginalFrame, poly[i][0], poly[i][3], Scalar(0, 0, 255), 6);
+               Mat warpped;
+               Mat res;
+			   Mat dst;
+				
+				int diff[4];
+				for (int i = 0; i < 4; i++)
+				{
+					Vertex[(0+i)%4] = Point2f(0, 0);
+					Vertex[(1+i)%4] = Point2f(0, 200);
+					Vertex[(2+i)%4] = Point2f(200, 200);
+					Vertex[(3+i)%4] = (Point2f(200, 0));
+                       				
+					res = getPerspectiveTransform(&Vertex_tmp[0], Vertex);
+					warpPerspective(gray, warpped,res,cv::Size(200, 200));			
+					resize_and_threshold_warped(warpped);
+					bitwise_xor(warpped, patt, dst);
+					//imshow("warpped", warpped); waitKey();
+					diff[i] = countNonZero(dst);
+				}
+				int index = 0;
+				for (int i = 1; i < 4; i++)
+				{
+					if (diff[i]<diff[index])
+					{
+						index = i;
+					}
 
-				//line(OriginalFrame, poly[i][3], poly[i][6], Scalar(0, 0, 255), 6);
+				}
+
+				vertexes.push_back(Vertex_tmp[(0 + index) % 4]);
+				vertexes.push_back(Vertex_tmp[(1 + index) % 4]);
+				vertexes.push_back(Vertex_tmp[(2 + index) % 4]);
+				vertexes.push_back(Vertex_tmp[(3 + index) % 4]);
+
 				arrowedLine(OriginalFrame, vertexes[0], vertexes[1], Scalar(0, 0, 255),6);
-			 		//cout << vertexes[0] <<" "<<vertexes[1]<<" "<<vertexes[2]<<" "<<vertexes[3]<< endl;
-		 
 
-				//line(OriginalFrame, poly[i][6], poly[i][9], Scalar(0, 0, 255), 6);
-
-
-				//line(OriginalFrame, poly[i][9], poly[i][0], Scalar(0, 0, 255), 6);
 
 			}
 		}

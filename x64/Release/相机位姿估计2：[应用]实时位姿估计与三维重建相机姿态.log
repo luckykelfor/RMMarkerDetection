@@ -1,0 +1,19 @@
+﻿生成启动时间为 2017/3/17 19:14:15。
+     1>项目“D:\MyWorkspace\VS2013\VS2013\Shawn_pose_estimation_by_opencv\相机位姿估计2：[应用]实时位姿估计与三维重建相机姿态\相机位姿估计2：[应用]实时位姿估计与三维重建相机姿态.vcxproj”在节点 2 上(Build 个目标)。
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /Zi /nologo /W3 /WX- /O2 /Oi /GL /D WIN32 /D NDEBUG /D _CONSOLE /D _LIB /D _UNICODE /D UNICODE /Gm- /EHsc /MD /GS /Gy /fp:precise /Zc:wchar_t /Zc:forScope /Fo"x64\Release\\" /Fd"x64\Release\vc120.pdb" /Gd /TP /errorReport:prompt main2.cpp
+         main2.cpp
+     1>d:\myworkspace\vs2013\vs2013\shawn_pose_estimation_by_opencv\相机位姿估计2：[应用]实时位姿估计与三维重建相机姿态\..\include\PNPSolver.h(131): warning C4244: “参数”: 从“double”转换到“float”，可能丢失数据
+     1>d:\myworkspace\vs2013\vs2013\shawn_pose_estimation_by_opencv\相机位姿估计2：[应用]实时位姿估计与三维重建相机姿态\DetecRM.h(65): warning C4101: “max_loc”: 未引用的局部变量
+     1>d:\myworkspace\vs2013\vs2013\shawn_pose_estimation_by_opencv\相机位姿估计2：[应用]实时位姿估计与三维重建相机姿态\DetecRM.h(65): warning C4101: “min_loc”: 未引用的局部变量
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"D:\MyWorkspace\VS2013\VS2013\Shawn_pose_estimation_by_opencv\x64\Release\相机位姿估计2：[应用]实时位姿估计与三维重建相机姿态.exe" /INCREMENTAL:NO /NOLOGO opencv_ml2411.lib opencv_calib3d2411.lib opencv_contrib2411.lib opencv_core2411.lib opencv_features2d2411.lib opencv_flann2411.lib opencv_gpu2411.lib opencv_highgui2411.lib opencv_imgproc2411.lib opencv_legacy2411.lib opencv_objdetect2411.lib opencv_ts2411.lib opencv_video2411.lib opencv_nonfree2411.lib opencv_ocl2411.lib opencv_photo2411.lib opencv_stitching2411.lib opencv_superres2411.lib opencv_videostab2411.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:\MyWorkspace\VS2013\VS2013\Shawn_pose_estimation_by_opencv\x64\Release\相机位姿估计2：[应用]实时位姿估计与三维重建相机姿态.pdb" /SUBSYSTEM:CONSOLE /OPT:REF /OPT:ICF /LTCG /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\MyWorkspace\VS2013\VS2013\Shawn_pose_estimation_by_opencv\x64\Release\相机位姿估计2：[应用]实时位姿估计与三维重建相机姿态.lib" /MACHINE:X64 x64\Release\PNPSolver.obj
+         x64\Release\main2.obj
+         正在生成代码
+         已完成代码的生成
+         相机位姿估计2：[应用]实时位姿估计与三维重建相机姿态.vcxproj -> D:\MyWorkspace\VS2013\VS2013\Shawn_pose_estimation_by_opencv\x64\Release\相机位姿估计2：[应用]实时位姿估计与三维重建相机姿态.exe
+     1>已完成生成项目“D:\MyWorkspace\VS2013\VS2013\Shawn_pose_estimation_by_opencv\相机位姿估计2：[应用]实时位姿估计与三维重建相机姿态\相机位姿估计2：[应用]实时位姿估计与三维重建相机姿态.vcxproj”(Build 个目标)的操作。
+
+生成成功。
+
+已用时间 00:00:03.02

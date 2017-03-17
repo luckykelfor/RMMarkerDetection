@@ -15,17 +15,18 @@ using namespace cv;
 //说明文章地址：http://www.cnblogs.com/singlex/p/pose_estimation_2.html
 
 
-double fx = 1151.1; // / 1194.61;
-double fy = 1150.8;///;// 1196.98;
-double u0 = 627.29108;// 233.0957;// 302.9064;// 634.075;
-double v0 = 369.8137;// 300.378;// 235.2960;// 504.842;
+double fx = 1164.1; // / 1194.61;
+double fy = 1163.8;///;// 1196.98;
+double u0 = 631.2303;// 233.0957;// 302.9064;// 634.075;
+double v0 = 373.7216;// 300.378;// 235.2960;// 504.842;
 //镜头畸变参数
-double k1 = 0.0638;;
-double k2 = -0.1401;
-double p1 = -0.0012;
-double p2 = -0.0023;
-double k3 = -0.0016;
+double k1 = 0.0356;;
+double k2 = -0.0737;
+double p1 = -0.00099;
+double p2 = -0.0030;
+double k3 =0.00;
 
+Mat patt;
  
 int main()
 {
@@ -39,8 +40,11 @@ int main()
 
 		//cvSetMouseCallback("CamPos", on_mouse, NULL);//绑定鼠标点击事件，通过鼠标点击添加追踪点。
 
-
-
+	patt = imread("D:/RM.jpg");
+	cvtColor(patt, patt, CV_BGR2GRAY);
+	resize(patt, patt, Size(200, 200));
+	threshold(patt, patt, 100, 255, CV_THRESH_BINARY);
+	imshow("Patt", patt);
 		//初始化位姿估计类
 		PNPSolver p4psolver;
 
@@ -112,6 +116,8 @@ int main()
 
 			vector<cv::Point2f>	ps = p4psolver.WordFrame2ImageFrame(r);
  
+
+			//Draw the reconstructed cube
 			cv::line(frame, ps[4], ps[5], cv::Scalar(255, 255, 0), 2);
 			cv::line(frame, ps[5], ps[6], cv::Scalar(255, 255, 0), 2);
 			cv::line(frame, ps[6], ps[7], cv::Scalar(255, 255, 0), 2);
@@ -129,14 +135,17 @@ int main()
 			cv::line(frame, ps[2], ps[6], cv::Scalar(255, 0, 255), 3);
 			cv::line(frame, ps[3], ps[7], cv::Scalar(255, 0, 255), 3);
 
-			double dx = fx *(center.x - u0) * 0.001;// mm;
-			double dy = fx * (center.y - v0) * 0.001;
+
 			
 
 			//输出位姿信息
 			cout << "pitch:"<<p4psolver.Theta_W2C.x << " roll:" << p4psolver.Theta_W2C.y << " yaw:" << p4psolver.Theta_W2C.z << endl;
-
+			//It semms the x,y,z results from solvPNP are not that trusty.
 			//cout << "x;"<<p4psolver.Position_OcInW.x << " y:" << p4psolver.Position_OcInW.y << " z:"<< p4psolver.Position_OcInW.z << endl;
+
+			//So calculate x,y directly.
+			double dx = fx *(center.x - u0) * 0.001;// mm;
+			double dy = fx * (center.y - v0) * 0.001;
 			cout << "x: " << dx << " y:" << dy << " z:" << p4psolver.Position_OcInW.z <<endl;
 		}
 		p4psolver.Points2D.clear();
