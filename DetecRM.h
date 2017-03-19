@@ -14,17 +14,16 @@
 //include<opencv.hpp>
 using namespace cv;
 #define REF_IMAGE_NUM 3
-char ReferenceImagesPaths[REF_IMAGE_NUM][20] = { "D:/ArrowUp.jpg", "D:/RM.jpg", "D:/Circle.jpg" };
-char ReferenceImagesTitle[REF_IMAGE_NUM][20] = { "ArrowU", "RM", "Circle" };
+ 
 const int minSquareArea = 5000;
 const int minDiff = 10000;
 const int match = -1;
-const int w = 640;
-const int h = 480;
+ 
 extern double fx;// = 1151.1; // / 1194.61;
 extern double fy;// = 1150.8;///;// 1196.98;
 extern double u0;// = 627.29108;// 233.0957;// 302.9064;// 634.075;
 extern double v0;// = 369.8137;// 300.378;// 235.2960;// 504.842;
+extern int PATTERN_SIZE;
 double max(double a, double b)
 {
 	return a > b ? a : b;
@@ -34,9 +33,9 @@ double min(double a, double b)
 	return a < b ? a : b;
 }
 
-extern Mat patt;
+extern Mat patt_RM;
 
-
+extern Mat patt_Arrow;
 
 //void readRefImages()
 //{
@@ -132,12 +131,14 @@ Mat auto_canny(Mat &image, float sigma = 0.33)
 }
 // compute the median of the single channel pixel intensities
 
-void getFourVertexes(Mat & OriginalFrame, vector<Point2f> & vertexes,Point & center)
+void getFourVertexes(Mat & OriginalFrame, vector<Point2f> & vertexes,Point & center, bool & isRM)
 {
 
+	vector<Mat> splits;
 
-	Mat gray;
-	cvtColor(OriginalFrame, gray, CV_BGR2GRAY);
+	split(OriginalFrame, splits);
+	Mat gray = splits[0].clone();
+	//cvtColor(OriginalFrame, gray, CV_BGR2GRAY);
 	Mat blurred;
 	GaussianBlur(gray, blurred, cv::Size(3, 3), 0);
 
@@ -149,24 +150,19 @@ void getFourVertexes(Mat & OriginalFrame, vector<Point2f> & vertexes,Point & cen
 	vector<vector<Point> >poly;
 
 
-	vector<Mat> splits;
-	Mat hsv;
-	cvtColor(OriginalFrame, hsv, CV_BGR2HSV);
-
-	split(hsv, splits);
-	
-
 	cv::findContours(edges, contours, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
 	poly.resize(contours.size());
 
 	vector<Point2f> Vertex_tmp;
-
+	int index = 0;
 	for (int i = 0; i < contours.size(); i++)
 	{
 		approxPolyDP(Mat(contours[i]), poly[i], 3, true);// 0.01*arcLength(Mat(contours[i]), true), true);
+		double area;
+		 
 		if (poly[i].size() ==12)
 		{
-			double area = contourArea(poly[i]);
+			 area = contourArea(poly[i]);
 
 			if (area > minSquareArea)
 			{
@@ -177,8 +173,13 @@ void getFourVertexes(Mat & OriginalFrame, vector<Point2f> & vertexes,Point & cen
 				double line32 = norm(poly[i][3] - poly[i][2]);
 				Point center_ = poly[i][0] + poly[i][3] + poly[i][6] + poly[i][9];
 				center_ = center_ *0.25;
-				unsigned char *p = splits[0].ptr<unsigned char>(center_.y);
-				if (abs(p[center_.x] - 98) < 50) continue;
+				unsigned char *p = splits[1].ptr<unsigned char>(center_.y);
+				cout<<abs(p[center_.x] - 98)<<endl;
+				if (abs(p[center_.x] - 98) > 50)
+					continue;
+					
+				isRM = true;
+				cout << abs(p[center_.x] - 98) << endl;//Trick here!
 				center = center_;
 				Point2f Vertex[4];
 
@@ -221,38 +222,54 @@ void getFourVertexes(Mat & OriginalFrame, vector<Point2f> & vertexes,Point & cen
                Mat res;
 			   Mat dst;
 				
+
+			   //Compute the diffImage to determine for finding the right order.
 				int diff[4];
 				for (int i = 0; i < 4; i++)
 				{
 					Vertex[(0+i)%4] = Point2f(0, 0);
-					Vertex[(1+i)%4] = Point2f(0, 200);
-					Vertex[(2+i)%4] = Point2f(200, 200);
-					Vertex[(3+i)%4] = (Point2f(200, 0));
+					Vertex[(1 + i) % 4] = Point2f(0, PATTERN_SIZE);
+					Vertex[(2 + i) % 4] =Point2f(PATTERN_SIZE, PATTERN_SIZE);
+					Vertex[(3 + i) % 4] = (Point2f(PATTERN_SIZE, 0));
                        				
 					res = getPerspectiveTransform(&Vertex_tmp[0], Vertex);
-					warpPerspective(gray, warpped,res,cv::Size(200, 200));			
+					warpPerspective(gray, warpped, res, cv::Size(PATTERN_SIZE, PATTERN_SIZE));
 					resize_and_threshold_warped(warpped);
-					bitwise_xor(warpped, patt, dst);
+
+					bitwise_xor(warpped, patt_RM, dst);
+					//else
+					//   bitwise_xor(warpped, patt_Arrow, dst);
 					//imshow("warpped", warpped); waitKey();
 					diff[i] = countNonZero(dst);
+					
 				}
-				int index = 0;
+				
+	
+				index = 0;
+				int index_M = 0;
 				for (int i = 1; i < 4; i++)
 				{
 					if (diff[i]<diff[index])
 					{
 						index = i;
 					}
+					if (diff[i]>diff[index_M])
+					{
+						index_M = i;
+					}
 
 				}
+			//	cout << (float)diff[index_M] / (PATTERN_SIZE*PATTERN_SIZE) << endl;//Another hint for determining RM or Arrow.
+ 
 
+				// shift to fix the order.
 				vertexes.push_back(Vertex_tmp[(0 + index) % 4]);
 				vertexes.push_back(Vertex_tmp[(1 + index) % 4]);
 				vertexes.push_back(Vertex_tmp[(2 + index) % 4]);
 				vertexes.push_back(Vertex_tmp[(3 + index) % 4]);
-
+                //index = 0;;// if (!isRM && index >2)index += 1;
 				arrowedLine(OriginalFrame, vertexes[0], vertexes[1], Scalar(0, 0, 255),6);
-				return;
+				return; //Here, remember to return for the current frame!
 
 
 			}

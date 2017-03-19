@@ -7,12 +7,6 @@
 using namespace std;
 using namespace cv;
 
-//本程序将展示一个实时相机位姿估计的例程，其中的原理在前文中已经说过了，利用《相机位姿估计1_1：OpenCV、solvePnP二次封装与性能测试》中构建的类
-//使得程序处理更加简单。本例程利用HSV空间，跟踪红色的特征点，将跟踪到的特征点用于解PNP问题，得到相机位姿（相机的世界坐标与相机的三个旋转角）。
-//最后使用labview中的三维图片控件，对整个系统进行3D重建。
-
-//@author:VShawn(singlex@foxmail.com)
-//说明文章地址：http://www.cnblogs.com/singlex/p/pose_estimation_2.html
 
 
 double fx = 1164.1; // / 1194.61;
@@ -26,7 +20,9 @@ double p1 = -0.00099;
 double p2 = -0.0030;
 double k3 =0.00;
 
-Mat patt;
+Mat patt_RM;
+Mat patt_Arrow;
+int PATTERN_SIZE = 200;
  
 int main()
 {
@@ -38,13 +34,19 @@ int main()
 	cv::namedWindow("CamPos", 0);
 
 
-		//cvSetMouseCallback("CamPos", on_mouse, NULL);//绑定鼠标点击事件，通过鼠标点击添加追踪点。
+	patt_RM = imread("D:/RM.jpg");
+	cvtColor(patt_RM, patt_RM, CV_BGR2GRAY);
+	resize(patt_RM, patt_RM, Size(PATTERN_SIZE, PATTERN_SIZE));
+	threshold(patt_RM, patt_RM, 100, 255, CV_THRESH_BINARY);
+	imshow("Patt", patt_RM);
 
-	patt = imread("D:/RM.jpg");
-	cvtColor(patt, patt, CV_BGR2GRAY);
-	resize(patt, patt, Size(200, 200));
-	threshold(patt, patt, 100, 255, CV_THRESH_BINARY);
-	imshow("Patt", patt);
+
+	//patt_Arrow = imread("D:/Arrow.jpg");
+	//cvtColor(patt_Arrow, patt_Arrow, CV_BGR2GRAY);
+	//resize(patt_Arrow, patt_Arrow, Size(PATTERN_SIZE, PATTERN_SIZE));
+	//threshold(patt_Arrow, patt_Arrow, 100, 255, CV_THRESH_BINARY);
+	//imshow("Arrow", patt_Arrow);
+
 		//初始化位姿估计类
 		PNPSolver p4psolver;
 
@@ -57,13 +59,6 @@ int main()
 		//p4psolver.Points3D.push_back(cv::Point3f(83, 72, 0));	//P2
 		//p4psolver.Points3D.push_back(cv::Point3f(116, 72, 0));	//P3
 		//p4psolver.Points3D.push_back(cv::Point3f(90, 114, 0));	//P4
-		//将特征点的世界坐标添加进去
-		p4psolver.Points3D.push_back(cv::Point3f(-60, -60, 0));		//P1三维坐标的单位是毫米
-			
-		p4psolver.Points3D.push_back(cv::Point3f(-60, 60, 0));	//
-		p4psolver.Points3D.push_back(cv::Point3f(60, 60, 0));	//P3
-	    p4psolver.Points3D.push_back(cv::Point3f(60, -60, 0));	//P2
-
 
 		Point center;
 
@@ -83,9 +78,8 @@ int main()
 		r.push_back(cv::Point3f(-100, 100, 200));//重投影点事件坐标
 
 
-		vcap.set(CV_CAP_PROP_FRAME_WIDTH, 1280);
-
-		vcap.set(CV_CAP_PROP_FRAME_HEIGHT, 720);
+		vcap.set(CV_CAP_PROP_FRAME_WIDTH, 640);
+		vcap.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
 		vcap.set(CV_CAP_PROP_FPS, 60);
 
 
@@ -93,23 +87,35 @@ int main()
 
 	while(vcap.isOpened())
 	{
-
-	
-		//p4psolver.Points3D.push_back(cv::Point3f(0, 100, 105));	//P5
-
-		//std::cout << "请在屏幕上点击确定特征点，特征点的点选顺序应与p4psolver.Points3D的存储顺序一致。" << endl;
- 
-		//提取相机当前帧图像，修改为你的相机驱动
-		//cv::Mat img = mvcam.Grub();
-		//vcap.read(frame);
 		vcap.read(frame);
 		cv::Mat paintBoard = cv::Mat::zeros(frame.size(), CV_8UC3);//新建一个Mat，用于存储绘制的东西
-
+		bool isRM;
 		cv::imshow("CamPos", (frame - paintBoard) + paintBoard + paintBoard);
-		getFourVertexes(frame, p4psolver.Points2D, center);
+		getFourVertexes(frame, p4psolver.Points2D, center,isRM);
 		//cout << frame.cols << " "<<frame.rows<<endl;
 		if (p4psolver.Points2D.size() == 4)
 		{
+
+			if (isRM)
+			{
+				//将特征点的世界坐标添加进去
+				p4psolver.Points3D.push_back(cv::Point3f(-60, -60, 0));		//P1三维坐标的单位是毫米
+
+				p4psolver.Points3D.push_back(cv::Point3f(-60, 60, 0));	//
+				p4psolver.Points3D.push_back(cv::Point3f(60, 60, 0));	//P3
+				p4psolver.Points3D.push_back(cv::Point3f(60, -60, 0));	//P2
+
+
+			}
+			else
+			{
+				p4psolver.Points3D.push_back(cv::Point3f(-65, -75, 0));		//P1三维坐标的单位是毫米
+
+				p4psolver.Points3D.push_back(cv::Point3f(-65, 75, 0));	//
+				p4psolver.Points3D.push_back(cv::Point3f(65, 75, 0));	//P3
+				p4psolver.Points3D.push_back(cv::Point3f(65, -75, 0));	//P2
+
+			}
 
 			////解位姿
 			p4psolver.Solve(PNPSolver::METHOD::CV_ITERATIVE);
@@ -140,17 +146,15 @@ int main()
 
 			//输出位姿信息
 			cout << "pitch:"<<p4psolver.Theta_W2C.x << " roll:" << p4psolver.Theta_W2C.y << " yaw:" << p4psolver.Theta_W2C.z << endl;
-			//It semms the x,y,z results from solvPNP are not that trusty.
-			//cout << "x;"<<p4psolver.Position_OcInW.x << " y:" << p4psolver.Position_OcInW.y << " z:"<< p4psolver.Position_OcInW.z << endl;
+			//It semms the z component from solvPNP is not that trusty.
+			cout << "x;" << p4psolver.Position_OwInC.x << " y:" << p4psolver.Position_OwInC.y << " z:" << p4psolver.Position_OwInC.z << endl;
 
-			//So calculate x,y directly.
-			double dx = fx *(center.x - u0) * 0.001;// mm;
-			double dy = fx * (center.y - v0) * 0.001;
-			cout << "x: " << dx << " y:" << dy << " z:" << p4psolver.Position_OcInW.z <<endl;
+			 
 		}
 		p4psolver.Points2D.clear();
+		p4psolver.Points3D.clear();
 		cv::imshow("CamPos", (frame - paintBoard) + paintBoard + paintBoard);
-		if( 27 == cv::waitKey(10))
+		if( 27 == cv::waitKey(2))
 			break;
 	}
 	vcap.release();//else
