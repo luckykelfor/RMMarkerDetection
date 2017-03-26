@@ -157,7 +157,6 @@ int main()
 		if( 27 == cv::waitKey(2))
 			break;
 	}
-	vcap.release();//else
-	//	std::cout << "相机初始化失败！" << endl;
+	vcap.release();
 	return 0;
 }
